@@ -25,6 +25,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once($CFG->dirroot.'/mod/wiki/locallib.php');
+
 /**
  * Return if the plugin supports $feature.
  *
@@ -47,7 +49,7 @@ function wikifilter_supports($feature) {
  * in mod_form.php) this function will create a new instance and return the id
  * number of the instance.
  *
- * @param  object                  $moduleinstance An object from the form.
+ * @param  object $moduleinstance An object from the form.
  * @param  mod_wikifilter_mod_form $mform          The form.
  * @return int The id of the newly inserted record.
  */
@@ -57,6 +59,15 @@ function wikifilter_add_instance($moduleinstance, $mform = null) {
     $moduleinstance->timecreated = time();
 
     $id = $DB->insert_record('wikifilter', $moduleinstance);
+    $wikiid = $moduleinstance->wiki;
+
+    // Saving wikifilter associations.
+    $formdata = $mform->get_data();
+    $associations = $formdata->associations;
+
+    if (!empty($associations)) {
+        wikifilter_insert_associations($id, $wikiid, $associations);
+    }
 
     return $id;
 }
@@ -67,7 +78,7 @@ function wikifilter_add_instance($moduleinstance, $mform = null) {
  * Given an object containing all the necessary data (defined in mod_form.php),
  * this function will update an existing instance with new data.
  *
- * @param  object                  $moduleinstance An object from the form in mod_form.php.
+ * @param  object $moduleinstance An object from the form in mod_form.php.
  * @param  mod_wikifilter_mod_form $mform          The form.
  * @return bool True if successful, false otherwise.
  */
@@ -76,6 +87,19 @@ function wikifilter_update_instance($moduleinstance, $mform = null) {
 
     $moduleinstance->timemodified = time();
     $moduleinstance->id = $moduleinstance->instance;
+
+    // Saving wikifilter associations.
+    $formdata = $mform->get_data();
+
+    $id = $moduleinstance->instance;
+    $wikiid = $moduleinstance->wiki;
+    $associations = $formdata->associations;
+
+    if (empty($associations)) {
+        $DB->delete_records('wikifilter_associations', array('wikifilter_id' => $id));
+    } else {
+        wikifilter_update_associations($id, $wikiid, $associations);
+    }
 
     return $DB->update_record('wikifilter', $moduleinstance);
 }
@@ -97,4 +121,68 @@ function wikifilter_delete_instance($id) {
     $DB->delete_records('wikifilter', array('id' => $id));
 
     return true;
+}
+
+/**
+ * insert new mod_wikifilter object associations.
+ *
+ * @param int $id mod_wikifilter id.
+ * @param int $wikiid mod_wiki id
+ * @param int $associations mod_ikifilter associations.
+ * @return bool True if successful, false on failure.
+ */
+function wikifilter_insert_associations($id, $wikiid, $associations) {
+    global $DB;
+
+    foreach ($associations as $association) {
+        $associationarray = explode('-', $association);
+        $roleid = $associationarray[0];
+        $tagid = $associationarray[1];
+
+        $association = new stdClass();
+        $association->role_id = $roleid;
+        $association->tag_id = $tagid;
+        $association->wiki_id = $wikiid;
+        $association->wikifilter_id = $id;
+
+        $DB->insert_record('wikifilter_associations', $association);
+    }
+
+    return true;
+}
+
+/**
+ * updates mod_wikifilter associations.
+ *
+ * @param int $id mod_ikifilter id.
+ * @param int $wikiid mod_wiki id
+ * @param int $associations mod_wikifilter associations.
+ * @return bool True if successful, false on failure.
+ */
+function wikifilter_update_associations($id, $wikiid, $associations) {
+    global $DB;
+
+    $DB->delete_records('wikifilter_associations', array('wikifilter_id' => $id));
+    wikifilter_insert_associations($id, $wikiid, $associations);
+
+    return true;
+
+}
+
+/**
+ * Returns wiki pages tags.
+ *
+ * @param int $id Wiki id.
+ * @return array
+ */
+function get_wiki_pages_tags($id) {
+    $wikipagestags = array();
+    if ($pages = wiki_get_page_list($id)) {
+        // Go through each page and get tags.
+        foreach ($pages as $page) {
+            $wikipagestags += core_tag_tag::get_item_tags_array('mod_wiki', 'wiki_pages', $page->id);
+        }
+    }
+
+    return $wikipagestags;
 }

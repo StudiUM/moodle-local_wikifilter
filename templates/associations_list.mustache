@@ -1,0 +1,66 @@
+<div class=row>
+  <div class="col-sm-3">
+    <button class="btn btn-primary btn-block mb-2" name="addassociationbtn" id="id_addassociationbtn" type="button" data-toggle="modal" data-target="#association-editor-modal">
+      {{#str}} add, wikifilter{{/str}}
+    </button>
+  </div>
+</div>
+
+<table width="100%" id="id_associations_table" class="table">
+  <tr>
+    <th width="20%">Role</th>
+    <th width="60%">Tags</th>
+    <th width="20%"></th>
+  </tr>
+  {{#hasroles}}
+  {{#roles}}
+  <tr>
+    <td class="role">{{rolename}}</td>
+    <td class="tags">
+        {{#tags}}
+        <span class="badge badge-info mb-3 mr-1" data-id="{{tagid}}">{{tagname}}</span>
+        {{/tags}}
+    </td>
+    <td class="actions" data-roleid="{{roleid}}" data-rolename="{{rolename}}">
+      <button type="button" title="{{#str}} modify, wikifilter{{/str}}" class="btn btn-default btn-sm edit-icon edit" data-toggle="modal" data-target="#association-editor-modal">
+        <span class="fa fa-pencil fa-lg" aria-hidden="true"></span>
+      </button>
+      <button type="button" title="{{#str}} delete, wikifilter{{/str}}" class="btn btn-default btn-sm delete-icon">
+        <span class="fa fa-trash-o fa-lg" aria-hidden="true"></span>
+      </button>
+      <div class="db-data">
+        {{#tags}}
+        <input name="associations[]" type="hidden" value="{{roleid}}-{{tagid}}">
+        {{/tags}}
+      </div>
+    </td>
+  </tr>
+  {{/roles}}
+  {{/hasroles}}
+
+  {{^hasroles}}
+    <tr class="empty_row">
+      <td colspan="3" class="text-center">{{#str}} nodata, wikifilter{{/str}}</td>
+    <tr>
+  {{/hasroles}}
+
+</table>
+
+<table id="table_clone" class="hidden">
+  <tr class="row_clone">
+    <td class="role"></td>
+    <td class="tags"></td>
+    <td class="actions" data-roleid="" data-rolename="">
+      <button type="button" title="{{#str}} modify, wikifilter{{/str}}" class="btn btn-default btn-sm edit-icon edit" data-toggle="modal" data-target="#association-editor-modal">
+        <span class="fa fa-pencil fa-lg" aria-hidden="true"></span>
+      </button>
+      <button type="button" title="{{#str}} delete, wikifilter{{/str}}" class="btn btn-default btn-sm delete-icon">
+        <span class="fa fa-trash-o fa-lg" aria-hidden="true"></span>
+      </button>
+      <div class="db-data"></div>
+    </td>
+  </tr>
+  <tr class="empty_row_clone">
+    <td colspan="3" class="text-center empty-table">{{#str}} nodata, wikifilter{{/str}}</td>
+  <tr>
+</table>

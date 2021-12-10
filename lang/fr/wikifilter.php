@@ -26,12 +26,23 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['add'] = 'Ajouter';
+$string['addassociation'] = 'Ajouter une association';
 $string['associations'] = 'Associations';
+$string['cancel'] = 'Annuler';
+$string['delete'] = 'Supprimer';
+$string['modify'] = 'Modifier';
 $string['modulename'] = 'Afficheur wiki';
+$string['modulenameplural'] = 'Afficheurs wiki';
+$string['nodata'] = 'Il n\'y a pas de données disponibles';
+$string['nowikiincourse'] = 'Il n\'y a aucune activité Wiki dans ce cours';
 $string['pluginname'] = 'Afficheur wiki';
 $string['pluginadministration'] = 'Administration wiki';
 $string['privacy:metadata'] = 'Le plugin Afficheur wiki n\'enregistre aucune donnée personnelle.';
-$string['modulenameplural'] = 'Afficheurs wiki';
+$string['role'] = 'Rôle';
+$string['selectionarea'] = 'Aucune sélection';
+$string['selecttagerror'] = 'Vous devez sélectionnner au moins une étiquette';
+$string['tags'] = 'Étiquette(s)';
 $string['wiki'] = 'Wiki';
 $string['wikifilterintro'] = 'Description';
 $string['wikifiltername'] = 'Nom';
