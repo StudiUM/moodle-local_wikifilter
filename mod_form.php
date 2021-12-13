@@ -58,7 +58,7 @@ class mod_wikifilter_mod_form extends moodleform_mod {
             new moodle_exception('invalidcourseid');
         }
         $coursecontext = context_course::instance($currentcourse);
-        $roles = get_all_roles($coursecontext);
+        $roles = get_assignable_roles($coursecontext, ROLENAME_BOTH);
 
         // Adding the "general" fieldset, where all the common settings are shown.
         $mform->addElement('header', 'general', get_string('general', 'form'));
@@ -125,7 +125,7 @@ class mod_wikifilter_mod_form extends moodleform_mod {
                     }
 
                     $associationstable['roles'][] = array('roleid' => $association->role_id,
-                        'rolename' => $roles[$association->role_id]->shortname,
+                        'rolename' => $roles[$association->role_id],
                         'tags' => $roletagsarray
                     );
                 }
@@ -140,11 +140,7 @@ class mod_wikifilter_mod_form extends moodleform_mod {
             $mform->addElement('html', '<div class="modal-body">');
 
             // Adding role field in modal.
-            $roleoptions = array();
-            foreach ($roles as $role) {
-                $roleoptions[$role->id] = $role->shortname;
-            }
-            $mform->addElement('select', 'role', get_string('role', 'wikifilter'), $roleoptions);
+            $mform->addElement('select', 'role', get_string('role', 'wikifilter'), $roles);
 
             $options = array(
                 'multiple' => true,
