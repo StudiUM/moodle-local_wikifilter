@@ -21,8 +21,18 @@
  * @copyright 2021 Université de Montréal
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['jquery', 'core/ajax', 'core/notification'], function($, ajax, notification) {
-
+define([
+    'jquery',
+    'core/ajax',
+    'core/form-autocomplete',
+    'core/str', 'core/notification'
+], function(
+    $,
+    ajax,
+    autocomplete,
+    str,
+    notification
+) {
     /**
      * Wikifilter associations list.
      */
@@ -77,7 +87,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, ajax, notificat
                 var thisTagId = thisTagElement.attr('data-value');
                 var thisTagText = thisTagElement.text().replace('×', '');
 
-                tagsCell += '<span class="badge badge-info mb-3 mr-1" data-id="' + selectedRole.id + '">' + thisTagText + '</span>';
+                tagsCell += '<span class="badge badge-info mb-3 mr-1" data-id="' + thisTagId + '">' + thisTagText + '</span>';
                 actionsCell += '<input name="associations[]" type="hidden" value="' + selectedRole.id + '-' + thisTagId + '">';
             });
 
@@ -95,14 +105,104 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, ajax, notificat
         };
     }
 
-     /**
-      * Wikifilter associations editor.
-      */
+    /**
+     * Wikifilter association role select.
+     */
+     function AssociationRoleSelect() {
+        this.id = '#id_role';
+        this.element = $(this.id);
+        this.showInEditMode = function(role) {
+            this.addOption(role.id, role.name);
+            this.setValue(role.id);
+            this.disable();
+        };
+        this.showInAddMode = function(selectedRoles) {
+            var thisObject = this;
+            this.enable();
+            $('.actions', selectedRoles).each(function() {
+                var thisRoleId = $(this).attr('data-roleid');
+                thisObject.deleteOption(thisRoleId);
+            });
+        };
+        this.setValue = function(value) {
+            this.element.val(value);
+        };
+        this.getSelectedOption = function() {
+            return {id: this.element.val(), name: this.element.find('option:selected').text()};
+        };
+        this.deleteSelectedOption = function() {
+            this.element.find('option:selected').remove();
+        };
+        this.addOption = function(key, value) {
+            $('<option/>').val(key).remove().html(value).appendTo(this.id);
+        };
+        this.deleteOption = function(id) {
+            this.element.find('option[value="' + id + '"]').remove();
+        };
+        this.enable = function() {
+            this.element.prop("disabled", false);
+        };
+        this.disable = function() {
+            this.element.prop("disabled", true);
+        };
+    }
+
+    /**
+     * Wikifilter association tags select.
+     */
+     function AssociationTagsSelect() {
+        this.id = '#id_wikitags';
+        this.element = $(this.id);
+        this.showInEditMode = function(selectedTags) {
+            var thisObject = this;
+            selectedTags.each(function() {
+                var thisTagId = $(this).attr('data-id');
+                thisObject.selectOption(thisTagId);
+            });
+
+            this.buildAutocompleteComponent();
+        };
+        this.selectOption = function(id) {
+            this.element.find('option[value="' + id + '"]').prop("selected", true);
+        };
+        this.unselectOptions = function() {
+            this.element.find('option:selected').prop("selected", false);
+        };
+        this.buildAutocompleteComponent = function() {
+            var thisObject = this;
+            var stringkeys = [{key: 'search', component: 'wikifilter'}, {key: 'selectionarea', component: 'wikifilter'}];
+            str.get_strings(stringkeys).then(function(langstrings) {
+                var placeholder = langstrings[0];
+                var noSelectionString = langstrings[1];
+
+                thisObject.element.nextAll().remove();
+                autocomplete.enhance(thisObject.id, false, '', placeholder, false, true, noSelectionString, true);
+            }).fail(notification.exception);
+        };
+        this.loadOptions = function(data) {
+            var thisObject = this;
+            // Populate tags list.
+            this.element.empty();
+            $.each(data, function(key, value) {
+                $('<option/>').val(key).html(value).appendTo(thisObject.id);
+            });
+        };
+        this.reset = function() {
+            this.unselectOptions();
+            this.buildAutocompleteComponent();
+        };
+    }
+
+    /**
+     * Wikifilter associations editor.
+     */
     function AssociationsEditor() {
         this.associationsList = new AssociationsList();
+        this.associationRoleSelect = new AssociationRoleSelect();
+        this.associationTagsSelect = new AssociationTagsSelect();
         this.associationEditorModal = $('#association-editor-modal');
-        this.roleSelectId = '#id_role';
-        this.tagsSelectId = '#id_wikitags';
+        this.addTitle = $('.modal-title.add', this.associationEditorModal);
+        this.editTitle = $('.modal-title.edit', this.associationEditorModal);
         this.addBtn = $('.add-btn', this.associationEditorModal);
         this.modifyBtn = $('.modify-btn', this.associationEditorModal);
         this.deleteBtn = $('.delete-icon');
@@ -110,51 +210,80 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, ajax, notificat
             this.events();
         };
         this.events = function() {
-            var thisObject = this;
-            var roleSelect = $(this.roleSelectId);
+            // Show association editor modal event.
+            this.showModalEvent();
 
+            // Hide association editor modal event.
+            this.hideModalEvent();
+
+            // Add association event.
+            this.addEvent();
+
+            // Modify association event.
+            this.modifyEvent();
+
+            // Delete association event.
+            this.deleteEvent();
+        };
+        this.showModalEvent = function() {
+            var thisObject = this;
             this.associationEditorModal.on('show.bs.modal', function(e) {
                 var callerBtn = $(e.relatedTarget);
 
-                // Edit association.
-                if (callerBtn.hasClass('edit')) {
+                if (callerBtn.hasClass('edit')) { // Edit mode.
                     var thisRoleId = callerBtn.closest('.actions').attr('data-roleid');
                     var thisRoleName = callerBtn.closest('.actions').attr('data-rolename');
 
-                    // Show edit button.
-                    thisObject.addBtn.addClass('hidden');
-                    thisObject.modifyBtn.removeClass('hidden').attr('data-item', thisRoleId);
+                    // Update modal header title and action buttons
+                    thisObject.updateModalSections('edit');
+                    thisObject.modifyBtn.attr('data-item', thisRoleId);
 
-                    // Add role option to roleSelect and select it.
-                    $('<option/>').val(thisRoleId).remove().html(thisRoleName).appendTo(thisObject.roleSelectId);
-                    roleSelect.val(thisRoleId).attr('disabled', 'disabled');
+                    // Show role select in edit mode.
+                    var role = {id: thisRoleId, name: thisRoleName};
+                    thisObject.associationRoleSelect.showInEditMode(role);
 
-                } else {
-                    // Remove associationsList roles from roleSelect.
-                    roleSelect.removeAttr('disabled');
-                    $('.actions', thisObject.associationsList.table).each(function() {
-                        var thisRoleId = $(this).attr('data-roleid');
-                        roleSelect.find('option[value="' + thisRoleId + '"]').remove();
-                    });
+                    // Show tags select in edit mode.
+                    var thisRoleRow = callerBtn.closest('tr');
+                    var thisRoleTags = $('.tags span', thisRoleRow);
+                    thisObject.associationTagsSelect.showInEditMode(thisRoleTags);
+
+                } else { // Add mode.
+                    // Show role select in add mode.
+                    thisObject.associationRoleSelect.showInAddMode(thisObject.associationsList.table);
+
                 }
             });
+        };
+        this.hideModalEvent = function() {
+            var thisObject = this;
             this.associationEditorModal.on('hidden.bs.modal', function() {
-                thisObject.addBtn.removeClass('hidden');
-                thisObject.modifyBtn.addClass('hidden');
-                thisObject.removeErrors();
-                thisObject.resetTags();
-            });
+                // Update modal header title and action buttons
+                thisObject.updateModalSections('add');
 
-            this.addEvent();
-            this.modifyEvent();
-            this.deleteEvent();
+                thisObject.removeErrors();
+
+                // Reset tags select.
+                thisObject.associationTagsSelect.reset();
+            });
+        };
+        this.updateModalSections = function(mode) {
+            if (mode == 'edit') {
+                this.addTitle.addClass('hidden');
+                this.editTitle.removeClass('hidden');
+                this.addBtn.addClass('hidden');
+                this.modifyBtn.removeClass('hidden');
+            } else {
+                this.addTitle.removeClass('hidden');
+                this.editTitle.addClass('hidden');
+                this.addBtn.removeClass('hidden');
+                this.modifyBtn.addClass('hidden');
+            }
 
         };
         this.addEvent = function() {
             var thisObject = this;
             var associationsList = this.associationsList;
             var associationEditorModal = this.associationEditorModal;
-            var roleSelect = $(this.roleSelectId, associationEditorModal);
 
             // Adding addassociation button click event.
             this.addBtn.click(function() {
@@ -164,27 +293,27 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, ajax, notificat
                 var isValid = thisObject.validate(tagsSelection);
                 if (isValid) {
                     // Adding new row.
-                    var thisRoleId = roleSelect.val();
-                    var thisRoleName = roleSelect.find('option:selected').text();
-
-                    var selectedRole = {id: thisRoleId, name: thisRoleName};
+                    var selectedRole = thisObject.associationRoleSelect.getSelectedOption();
                     var selectedTags = $('.badge', tagsSelection);
                     associationsList.addRow(selectedRole, selectedTags);
 
                     // Adding new row delete association button click event.
                     $('tr:last .delete-icon', associationsList.table).click(function() {
                         var thisRow = $(this).closest('tr');
-                        thisObject.updateRolesSelect(thisRow);
+                        var thisRoleId = $('.actions', thisRow).attr('data-roleid');
+                        var thisRoleName = $('.actions', thisRow).attr('data-rolename');
+                        thisObject.associationRoleSelect.addOption(thisRoleId, thisRoleName);
                         associationsList.deleteRow(thisRow);
                     });
 
-                    // Remove selected role from roleSelect.
-                    roleSelect.find('option:selected').remove();
+                    // Deleting selected role from roleSelect.
+                    thisObject.associationRoleSelect.deleteSelectedOption();
 
-                    // Show modal.
+                    // Showing modal.
                     associationEditorModal.modal('hide');
 
                 } else {
+                    // Tags selection input focus event.
                     tagsSelection.next().find('input').focus(function() {
                         thisObject.removeErrors();
                     });
@@ -195,7 +324,6 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, ajax, notificat
             var thisObject = this;
             var associationsList = this.associationsList;
             var associationEditorModal = this.associationEditorModal;
-            var roleSelect = $(this.roleSelectId, associationEditorModal);
 
             // Adding modify association button click event.
             this.modifyBtn.click(function() {
@@ -204,15 +332,12 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, ajax, notificat
                 var isValid = thisObject.validate(tagsSelection);
                 if (isValid) {
                     // Modifying row.
-                    var thisRoleId = roleSelect.val();
-                    var thisRoleName = roleSelect.find('option:selected').text();
-
-                    var thisRow = $('.actions[data-roleid="' + thisRoleId + '"]').closest('tr');
-                    var selectedRole = {id: thisRoleId, name: thisRoleName};
+                    var selectedRole = thisObject.associationRoleSelect.getSelectedOption();
+                    var thisRow = $('.actions[data-roleid="' + selectedRole.id + '"]').closest('tr');
                     var selectedTags = $('.badge', tagsSelection);
                     associationsList.modifyRow(thisRow, selectedRole, selectedTags);
 
-                    // Hide modal.
+                    // Hiding modal.
                     associationEditorModal.modal('hide');
                 } else {
                     tagsSelection.next().find('input').focus(function() {
@@ -228,34 +353,10 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, ajax, notificat
             // Adding delete association button click event.
             this.deleteBtn.click(function() {
                 var thisRow = $(this).closest('tr');
-                thisObject.updateRolesSelect(thisRow);
+                var thisRoleId = $('.actions', thisRow).attr('data-roleid');
+                var thisRoleName = $('.actions', thisRow).attr('data-rolename');
+                thisObject.associationRoleSelect.addOption(thisRoleId, thisRoleName);
                 associationsList.deleteRow(thisRow);
-            });
-        };
-        this.updateRolesSelect = function(roleRow) {
-            var optionVal = $('.actions', roleRow).attr('data-roleid');
-            var optionText = $('.actions', roleRow).attr('data-rolename');
-            $('<option/>').val(optionVal).html(optionText).appendTo(this.roleSelectId);
-        };
-        this.updateTagsSelect = function(data) {
-            var thisObject = this;
-
-            this.associationsList.empty();
-
-            // Populate tags list.
-            $(thisObject.tagsSelectId).empty();
-            $.each(data, function(key, value) {
-                $('<option/>').val(key).html(value).appendTo(thisObject.tagsSelectId);
-            });
-
-        };
-        this.resetTags = function() {
-            var tagsSelection = $('.form-autocomplete-selection', this.associationEditorModal);
-            var selectedTags = $('.badge', tagsSelection);
-
-            selectedTags.each(function() {
-                var thisTagElement = $(this);
-                thisTagElement.trigger('click');
             });
         };
         this.validate = function() {
@@ -296,7 +397,8 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, ajax, notificat
                     },
                 }])[0].done(function(response) {
                     var data = JSON.parse(response);
-                    thisObject.associationsEditor.updateTagsSelect(data);
+                    thisObject.associationsEditor.associationsList.empty();
+                    thisObject.associationsEditor.associationTagsSelect.loadOptions(data);
                     return;
                 }).fail(notification.exception);
             });
