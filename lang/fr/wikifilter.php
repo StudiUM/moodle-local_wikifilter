@@ -30,6 +30,7 @@ $string['add'] = 'Ajouter';
 $string['addassociation'] = 'Ajouter une association';
 $string['associations'] = 'Associations';
 $string['cancel'] = 'Annuler';
+$string['cantdisplaypage'] = 'Cette page ne peut pas être affichée';
 $string['delete'] = 'Supprimer';
 $string['modify'] = 'Modifier';
 $string['modifyassociation'] = 'Modifier une association';

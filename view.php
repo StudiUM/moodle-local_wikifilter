@@ -25,42 +25,61 @@
 
 require(__DIR__.'/../../config.php');
 require_once(__DIR__.'/lib.php');
+require_once($CFG->dirroot.'/user/lib.php');
 
 // Course module id.
 $id = optional_param('id', 0, PARAM_INT);
 
-// Activity instance id.
-$w = optional_param('w', 0, PARAM_INT);
+// Wiki page ID.
+$pageid = optional_param('pageid', 0, PARAM_INT);
 
-if ($id) {
-    $cm = get_coursemodule_from_id('wikifilter', $id, 0, false, MUST_EXIST);
-    $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
-    $moduleinstance = $DB->get_record('wikifilter', array('id' => $cm->instance), '*', MUST_EXIST);
-} else {
-    $moduleinstance = $DB->get_record('wikifilter', array('id' => $w), '*', MUST_EXIST);
-    $course = $DB->get_record('course', array('id' => $moduleinstance->course), '*', MUST_EXIST);
-    $cm = get_coursemodule_from_instance('wikifilter', $moduleinstance->id, $course->id, false, MUST_EXIST);
-}
+// Getting course module instance.
+$cm = get_coursemodule_from_id('wikifilter', $id);
 
-require_login($course, true, $cm);
+// Checking course instance.
+$course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
 
+require_course_login($course, true, $cm);
+
+$moduleinstance = $DB->get_record('wikifilter', array('id' => $cm->instance), '*', MUST_EXIST);
 $modulecontext = context_module::instance($cm->id);
 
-$event = \mod_wikifilter\event\course_module_viewed::create(
-    array(
-    'objectid' => $moduleinstance->id,
-    'context' => $modulecontext
-    )
-);
-$event->add_record_snapshot('course', $course);
-$event->add_record_snapshot('wikifilter', $moduleinstance);
-$event->trigger();
+// Getting wiki instance.
+$wiki = wiki_get_wiki($moduleinstance->wiki);
+
+// Getting current group id.
+$currentgroup = groups_get_activity_group($cm);
+
+// Getting current user id.
+if ($wiki->wikimode == 'individual') {
+    $userid = $USER->id;
+} else {
+    $userid = 0;
+}
+
+// Getting subwiki.
+$subwiki = wiki_get_subwiki_by_group($wiki->id, $currentgroup, $userid);
 
 $PAGE->set_url('/mod/wikifilter/view.php', array('id' => $cm->id));
 $PAGE->set_title(format_string($moduleinstance->name));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($modulecontext);
+$PAGE->set_cm($cm);
+
+if ($pageid) {
+    $wikipages = $DB->get_records('wiki_pages', array('subwikiid' => $subwiki->id));
+    $wikipage = $wikipages[$pageid];
+
+} else {
+    // Getting first page.
+    $wikipage = wiki_get_first_page($subwiki->id, $wiki);
+}
 
 echo $OUTPUT->header();
+if (can_user_view_wiki_page($moduleinstance, $wikipage)) {
+    print_wiki_page_content($id, $wikipage, $modulecontext, $subwiki->id);
+} else {
+    echo $OUTPUT->render_from_template('wikifilter/permissiondenied', []);
+}
 
 echo $OUTPUT->footer();

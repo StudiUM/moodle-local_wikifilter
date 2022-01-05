@@ -124,7 +124,7 @@ function wikifilter_delete_instance($id) {
 }
 
 /**
- * insert new mod_wikifilter object associations.
+ * Insert new mod_wikifilter object associations.
  *
  * @param int $id mod_wikifilter id.
  * @param int $wikiid mod_wiki id
@@ -152,9 +152,9 @@ function wikifilter_insert_associations($id, $wikiid, $associations) {
 }
 
 /**
- * updates mod_wikifilter associations.
+ * Updates mod_wikifilter associations.
  *
- * @param int $id mod_ikifilter id.
+ * @param int $id mod_wikifilter id.
  * @param int $wikiid mod_wiki id
  * @param int $associations mod_wikifilter associations.
  * @return bool True if successful, false on failure.
@@ -185,4 +185,112 @@ function get_wiki_pages_tags($id) {
     }
 
     return $wikipagestags;
+}
+
+/**
+ * Check if user can view a wiki page.
+ *
+ * @param object $moduleinstance wikifilter object.
+ * @param object $wikipage wiki page object.
+ * @return bool
+ */
+function can_user_view_wiki_page($moduleinstance, $wikipage) {
+    global $USER;
+    $canview = false;
+    if (is_siteadmin($USER->id)) {
+        $canview = true;
+    } else {
+        $pagetagsids = array_keys(core_tag_tag::get_item_tags_array('mod_wiki', 'wiki_pages', $wikipage->id));
+        $coursecontext = context_course::instance($moduleinstance->course);
+        $userroles = get_user_roles($coursecontext, $USER->id);
+        $associations = get_wikifilter_associations($moduleinstance->id);
+        foreach ($userroles as $userrole) {
+            if (array_key_exists($userrole->roleid, $associations)) {
+                $roletagsids = explode(',', $associations[$userrole->roleid]->role_tags);
+                if (!empty(array_intersect($roletagsids, $pagetagsids))) {
+                    $canview = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    return $canview;
+}
+
+/**
+ * Print wiki page content.
+ *
+ * @param int $moduleinstanceid mod_wikifilter id.
+ * @param object $page wiki page object.
+ * @param object $context module context.
+ * @param object $subwikiid subwiki ID.
+ */
+function print_wiki_page_content($moduleinstanceid, $page, $context, $subwikiid) {
+    global $OUTPUT, $CFG;
+
+    if ($page->timerendered + WIKI_REFRESH_CACHE_TIME < time()) {
+        $content = wiki_refresh_cachedcontent($page);
+        $page = $content['page'];
+    }
+
+    if (isset($content)) {
+        $box = '';
+        foreach ($content['sections'] as $s) {
+            $box .= '<p>' . get_string('repeatedsection', 'wiki', $s) . '</p>';
+        }
+
+        if (!empty($box)) {
+            echo $OUTPUT->box($box);
+        }
+    }
+
+    $html = file_rewrite_pluginfile_urls($page->cachedcontent,
+                                        'pluginfile.php',
+                                        $context->id,
+                                        'mod_wiki',
+                                        'attachments',
+                                        $subwikiid);
+    $html = format_text($html, FORMAT_HTML, array('overflowdiv' => true, 'allowid' => true));
+    $html = format_wiki_page_content($moduleinstanceid, $html);
+    echo $OUTPUT->box($html);
+    echo $OUTPUT->tag_list(core_tag_tag::get_item_tags('mod_wiki', 'wiki_pages', $page->id),
+            null, 'wiki-tags');
+
+    wiki_increment_pageviews($page);
+}
+
+/**
+ * Format wiki page content.
+ *
+ * @param int $moduleinstanceid mod_wikifilter id.
+ * @param string $content wiki page html.
+ * @return string
+ */
+function format_wiki_page_content($moduleinstanceid, $content) {
+    $editlinkspattern = '/<a href=\"(edit\.php.*?)\">(.*?)<\/a>/';
+    $viewlinkspattern = '/(mod\/wiki\/view\.php\?pageid=(\d))/';
+
+    $content = preg_replace($editlinkspattern, "", $content);
+    $content = preg_replace($viewlinkspattern, "mod/wikifilter/view.php?id=$moduleinstanceid&pageid=$2", $content);
+
+    return $content;
+}
+
+/**
+ * Get wikifilter associations.
+ *
+ * @param int $moduleinstanceid wikifilter object.
+ * @return array
+ */
+function get_wikifilter_associations($moduleinstanceid) {
+    global $DB;
+
+    $sql = "SELECT role_id, GROUP_CONCAT(tag_id) AS role_tags
+        FROM {wikifilter_associations}
+        WHERE wikifilter_id = $moduleinstanceid
+        GROUP BY role_id;";
+
+    $associations = $DB->get_records_sql($sql);
+    return $associations;
 }

@@ -109,13 +109,7 @@ class mod_wikifilter_mod_form extends moodleform_mod {
             $associationstable  = array('roles' => array(), 'hasroles' => false);
             if ($this->current->instance) {
                 $currentinstance = $this->current->id;
-
-                $sql = "SELECT role_id, GROUP_CONCAT(tag_id) AS role_tags
-                FROM mdl_wikifilter_associations
-                WHERE wikifilter_id = $currentinstance
-                GROUP BY role_id;";
-
-                $associations = $DB->get_records_sql($sql);
+                $associations = get_wikifilter_associations($currentinstance);
                 $associationstable['hasroles'] = !empty($associations);
                 foreach ($associations as $association) {
                     $roletagsarray = array();
