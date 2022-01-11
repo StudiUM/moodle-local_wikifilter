@@ -37,6 +37,7 @@ function wikifilter_supports($feature) {
     switch ($feature) {
         case FEATURE_MOD_INTRO:
             return true;
+
         default:
             return null;
     }
@@ -172,12 +173,33 @@ function wikifilter_update_associations($id, $wikiid, $associations) {
 /**
  * Returns wiki pages tags.
  *
- * @param int $id Wiki id.
+ * @param int $wid Wiki id.
  * @return array
  */
-function get_wiki_pages_tags($id) {
+function get_wiki_pages_tags($wid, $cmid) {
+    global $USER, $PAGE;
+
+    // Getting wiki by id.
+    $wiki = wiki_get_wiki($wid);
+
+    // Getting course module by id.
+    $cm = get_coursemodule_from_id('wikifilter', $cmid);
+
+    // Getting current group id.
+    $currentgroup = groups_get_activity_group($cm);
+
+    // Getting current user id.
+    if ($wiki->wikimode == 'individual') {
+        $userid = $USER->id;
+    } else {
+        $userid = 0;
+    }
+
+    // Getting subwiki.
+    $subwiki = wiki_get_subwiki_by_group($wiki->id, $currentgroup, $userid);
+
     $wikipagestags = array();
-    if ($pages = wiki_get_page_list($id)) {
+    if ($pages = wiki_get_page_list($subwiki->id)) {
         // Go through each page and get tags.
         foreach ($pages as $page) {
             $wikipagestags += core_tag_tag::get_item_tags_array('mod_wiki', 'wiki_pages', $page->id);
@@ -191,16 +213,16 @@ function get_wiki_pages_tags($id) {
  * Check if user can view a wiki page.
  *
  * @param object $moduleinstance wikifilter object.
- * @param object $wikipage wiki page object.
+ * @param int $wikipageid wiki page id.
  * @return bool
  */
-function can_user_view_wiki_page($moduleinstance, $wikipage) {
+function can_user_view_wiki_page($moduleinstance, $wikipageid) {
     global $USER;
     $canview = false;
     if (is_siteadmin($USER->id)) {
         $canview = true;
     } else {
-        $pagetagsids = array_keys(core_tag_tag::get_item_tags_array('mod_wiki', 'wiki_pages', $wikipage->id));
+        $pagetagsids = array_keys(core_tag_tag::get_item_tags_array('mod_wiki', 'wiki_pages', $wikipageid));
         $coursecontext = context_course::instance($moduleinstance->course);
         $userroles = get_user_roles($coursecontext, $USER->id);
         $associations = get_wikifilter_associations($moduleinstance->id);
@@ -221,12 +243,12 @@ function can_user_view_wiki_page($moduleinstance, $wikipage) {
 /**
  * Print wiki page content.
  *
- * @param int $moduleinstanceid mod_wikifilter id.
+ * @param object $moduleinstance wikifilter object.
  * @param object $page wiki page object.
  * @param object $context module context.
  * @param object $subwikiid subwiki ID.
  */
-function print_wiki_page_content($moduleinstanceid, $page, $context, $subwikiid) {
+function print_wiki_page_content($moduleinstance, $page, $context, $subwikiid) {
     global $OUTPUT, $CFG;
 
     if ($page->timerendered + WIKI_REFRESH_CACHE_TIME < time()) {
@@ -252,7 +274,9 @@ function print_wiki_page_content($moduleinstanceid, $page, $context, $subwikiid)
                                         'attachments',
                                         $subwikiid);
     $html = format_text($html, FORMAT_HTML, array('overflowdiv' => true, 'allowid' => true));
-    $html = format_wiki_page_content($moduleinstanceid, $html);
+    $html = process_wiki_page_links($moduleinstance, $html);
+    $html = format_wiki_page_content($context->instanceid, $html);
+
     echo $OUTPUT->box($html);
     echo $OUTPUT->tag_list(core_tag_tag::get_item_tags('mod_wiki', 'wiki_pages', $page->id),
             null, 'wiki-tags');
@@ -278,6 +302,38 @@ function format_wiki_page_content($moduleinstanceid, $content) {
 }
 
 /**
+ * Process wiki page links.
+ *
+ * @param object $moduleinstance wikifilter object.
+ * @param string $content wiki page html.
+ * @return string
+ */
+function process_wiki_page_links($moduleinstance, $content) {
+    $baseurl = new moodle_url('/mod/wiki/view.php', array('pageid' => 'PAGEID'));
+    $baseurl = $baseurl->out(false);
+    $baseurl = preg_quote($baseurl);
+    $baseurl = str_replace('PAGEID', '(\d+)', $baseurl);
+
+    if (preg_match_all("|$baseurl|", $content, $matches)) {
+        $urls = $matches[0];
+        $pagesids = $matches[1];
+
+        foreach ($pagesids as $index => $pageid) {
+            if (!can_user_view_wiki_page($moduleinstance, $pageid)) {
+                $find = $urls[$index];
+                $replace = 'inaccessiblelink';
+                $content = str_replace($find, $replace, $content);
+            }
+        }
+    }
+
+    $pattern = '/<a href=\"inaccessiblelink\">(.*?)<\/a>/';
+    $content = preg_replace($pattern, '\1', $content);
+
+    return $content;
+}
+
+/**
  * Get wikifilter associations.
  *
  * @param int $moduleinstanceid wikifilter object.
@@ -294,3 +350,4 @@ function get_wikifilter_associations($moduleinstanceid) {
     $associations = $DB->get_records_sql($sql);
     return $associations;
 }
+

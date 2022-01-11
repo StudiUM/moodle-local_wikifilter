@@ -76,8 +76,9 @@ if ($pageid) {
 }
 
 echo $OUTPUT->header();
-if (can_user_view_wiki_page($moduleinstance, $wikipage)) {
-    print_wiki_page_content($id, $wikipage, $modulecontext, $subwiki->id);
+
+if (can_user_view_wiki_page($moduleinstance, $wikipage->id)) {
+    print_wiki_page_content($moduleinstance, $wikipage, $modulecontext, $subwiki->id);
 } else {
     echo $OUTPUT->render_from_template('wikifilter/permissiondenied', []);
 }

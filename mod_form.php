@@ -89,7 +89,6 @@ class mod_wikifilter_mod_form extends moodleform_mod {
 
             // Adding wiki field.
             $mform->addElement('select', 'wiki', null, $wikioptions);
-
         } else {
             $nowikimessage = get_string('nowikiincourse', 'wikifilter');
             $mform->addElement('html', $OUTPUT->render_from_template('wikifilter/nowiki', ['message' => $nowikimessage] ));
@@ -103,7 +102,9 @@ class mod_wikifilter_mod_form extends moodleform_mod {
             // Adding associations fieldset.
             $mform->addElement('header', 'associations_header', get_string('associations', 'wikifilter'));
 
-            $wikipagestags = get_wiki_pages_tags($currentwiki);
+            // Getting course module instance.
+            $cmid = optional_param('update', 0, PARAM_INT);
+            $wikipagestags = get_wiki_pages_tags($currentwiki, $cmid);
 
             // Adding associations table.
             $associationstable  = array('roles' => array(), 'hasroles' => false);
