@@ -37,6 +37,10 @@ function wikifilter_supports($feature) {
     switch ($feature) {
         case FEATURE_MOD_INTRO:
             return true;
+        case FEATURE_BACKUP_MOODLE2:
+            return true;
+        case FEATURE_SHOW_DESCRIPTION:
+            return true;
 
         default:
             return null;
@@ -167,13 +171,13 @@ function wikifilter_update_associations($id, $wikiid, $associations) {
     wikifilter_insert_associations($id, $wikiid, $associations);
 
     return true;
-
 }
 
 /**
  * Returns wiki pages tags.
  *
  * @param int $wid Wiki id.
+ * @param int $cmid Course module id.
  * @return array
  */
 function get_wiki_pages_tags($wid, $cmid) {
@@ -350,4 +354,3 @@ function get_wikifilter_associations($moduleinstanceid) {
     $associations = $DB->get_records_sql($sql);
     return $associations;
 }
-
