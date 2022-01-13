@@ -102,9 +102,8 @@ class mod_wikifilter_mod_form extends moodleform_mod {
             // Adding associations fieldset.
             $mform->addElement('header', 'associations_header', get_string('associations', 'wikifilter'));
 
-            // Getting course module instance.
-            $cmid = optional_param('update', 0, PARAM_INT);
-            $wikipagestags = get_wiki_pages_tags($currentwiki, $cmid);
+            // Getting wiki pages tags.
+            $wikipagestags = get_wiki_pages_tags($currentwiki, $currentcourse);
 
             // Adding associations table.
             $associationstable  = array('roles' => array(), 'hasroles' => false);

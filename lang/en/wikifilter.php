@@ -49,6 +49,8 @@ $string['tags'] = 'tag(s)';
 $string['wiki'] = 'Wiki';
 $string['wikifilterintro'] = 'Description';
 $string['wikifiltername'] = 'Name';
+$string['wikifilter:addinstance'] = 'Add a new wikifilter';
+$string['wikifilter:view'] = 'View a wikifilter';
 
 
 

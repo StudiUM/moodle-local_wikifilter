@@ -171,23 +171,24 @@ function wikifilter_update_associations($id, $wikiid, $associations) {
     wikifilter_insert_associations($id, $wikiid, $associations);
 
     return true;
+
 }
 
 /**
  * Returns wiki pages tags.
  *
  * @param int $wid Wiki id.
- * @param int $cmid Course module id.
+ * @param int $courseid Course id.
  * @return array
  */
-function get_wiki_pages_tags($wid, $cmid) {
+function get_wiki_pages_tags($wid, $courseid) {
     global $USER, $PAGE;
 
     // Getting wiki by id.
     $wiki = wiki_get_wiki($wid);
 
     // Getting course module by id.
-    $cm = get_coursemodule_from_id('wikifilter', $cmid);
+    $cm = get_coursemodule_from_instance('wiki', $wid, $courseid);
 
     // Getting current group id.
     $currentgroup = groups_get_activity_group($cm);
@@ -354,3 +355,4 @@ function get_wikifilter_associations($moduleinstanceid) {
     $associations = $DB->get_records_sql($sql);
     return $associations;
 }
+
