@@ -27,6 +27,7 @@
 defined('MOODLE_INTERNAL') || die();
 require_once("$CFG->libdir/externallib.php");
 require_once($CFG->dirroot.'/mod/wiki/locallib.php');
+require_once($CFG->dirroot.'/mod/wikifilter/lib.php');
 
 use external_api;
 use core_tag_tag;
@@ -49,27 +50,24 @@ class wikifilter_external extends external_api {
     public static function get_wiki_pages_tags_parameters() {
         return new external_function_parameters(
             array(
-                'id' => new external_value(PARAM_INT, 'id'))
-            );
+                'id' => new external_value(PARAM_INT, 'id'),
+                'course' => new external_value(PARAM_INT, 'course')
+            )
+        );
     }
 
     /**
      * Returns wiki pages tags.
      *
      * @param int $id Wiki id.
+     * @param int $course Course id.
      * @return array
      */
-    public static function get_wiki_pages_tags($id) {
+    public static function get_wiki_pages_tags($id, $course) {
 
-        $params = self::validate_parameters(self::get_wiki_pages_tags_parameters(), array('id' => $id));
+        $params = self::validate_parameters(self::get_wiki_pages_tags_parameters(), array('id' => $id, 'course' => $course));
 
-        $wikipagestags = array();
-        if ($pages = wiki_get_page_list($params['id'])) {
-            // Go through each page and get tags.
-            foreach ($pages as $page) {
-                $wikipagestags += core_tag_tag::get_item_tags_array('mod_wiki', 'wiki_pages', $page->id);
-            }
-        }
+        $wikipagestags = get_wiki_pages_tags($params['id'], $params['course']);
 
         return json_encode($wikipagestags);
     }

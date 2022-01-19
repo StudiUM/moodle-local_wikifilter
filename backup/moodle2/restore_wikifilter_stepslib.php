@@ -46,7 +46,7 @@ class restore_wikifilter_activity_structure_step extends restore_activity_struct
         $userinfo = $this->get_setting_value('userinfo');
 
         $paths[] = new restore_path_element('wikifilter', '/activity/wikifilter');
-        $paths[] = new restore_path_element('wikifilter_associations', '/activity/wikifilter/associations/association');
+        $paths[] = new restore_path_element('wikifilter_association', '/activity/wikifilter/associations/association');
 
         // Return the paths wrapped into standard activity structure.
         return $this->prepare_activity_structure($paths);
@@ -61,12 +61,20 @@ class restore_wikifilter_activity_structure_step extends restore_activity_struct
         global $DB;
 
         $data = (object)$data;
-        $oldid = $data->id;
+
+        // Get the course module of the restored wikifilter wiki.
+        $oldwikicm = get_coursemodule_from_instance('wiki', $data->wiki, $data->course);
+        $newwikicmid = $this->get_mappingid('course_module', $oldwikicm->id);
+        if ($newwikicmid) {
+            $newwikicm = get_coursemodule_from_id('wiki', $newwikicmid);
+            $data->wiki = $newwikicm->instance;
+        }
 
         $data->course = $this->get_courseid();
 
         // Insert the wiki record.
         $newitemid = $DB->insert_record('wikifilter', $data);
+
         // Immediately after inserting "activity" record, call this.
         $this->apply_activity_instance($newitemid);
     }
@@ -76,15 +84,17 @@ class restore_wikifilter_activity_structure_step extends restore_activity_struct
      *
      * @param stdClass $data
      */
-    protected function process_wikifilter_associations($data) {
+    protected function process_wikifilter_association($data) {
         global $DB;
 
         $data = (object)$data;
 
         $data->wikifilter_id = $this->get_new_parentid('wikifilter');
 
-        $newitemid = $DB->insert_record('wikifilter_associations', $data);
+        $restoredwikifilterinstance = $DB->get_record('wikifilter', array('id' => $data->wikifilter_id));
+        $data->wiki_id = $restoredwikifilterinstance->wiki;
 
+        $newitemid = $DB->insert_record('wikifilter_associations', $data);
     }
 
     /**

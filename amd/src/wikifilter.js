@@ -390,10 +390,12 @@ define([
             var thisObject = this;
             this.wiki.change(function() {
                 var wikiID = $(this).val();
+                var course = $('input[name=course]').val();
                 ajax.call([{
                     methodname: 'wikifilter_external_getwikipagestags',
                     args: {
-                        id:  wikiID
+                        id:  wikiID,
+                        course:  course
                     },
                 }])[0].done(function(response) {
                     var data = JSON.parse(response);
