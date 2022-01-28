@@ -57,6 +57,7 @@ class mod_wikifilter_mod_form extends moodleform_mod {
         if (!$course = $DB->get_record('course', array('id' => $currentcourse))) {
             new moodle_exception('invalidcourseid');
         }
+
         $coursecontext = context_course::instance($currentcourse);
         $roles = get_assignable_roles($coursecontext, ROLENAME_BOTH);
 
@@ -94,7 +95,7 @@ class mod_wikifilter_mod_form extends moodleform_mod {
             $mform->addElement('html', $OUTPUT->render_from_template('wikifilter/nowiki', ['message' => $nowikimessage] ));
 
             $mform->addElement('text', 'nowiki', '', ['class' => 'hidden']);
-            $mform->setType('wiki', PARAM_RAW);
+            $mform->setType('nowiki', PARAM_RAW);
             $mform->addRule('nowiki', $required, 'required', null, 'client');
         }
 
@@ -157,3 +158,4 @@ class mod_wikifilter_mod_form extends moodleform_mod {
         $this->add_action_buttons();
     }
 }
+

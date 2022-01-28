@@ -29,11 +29,6 @@ require_once("$CFG->libdir/externallib.php");
 require_once($CFG->dirroot.'/mod/wiki/locallib.php');
 require_once($CFG->dirroot.'/mod/wikifilter/lib.php');
 
-use external_api;
-use core_tag_tag;
-use external_function_parameters;
-use external_value;
-
 /**
  * This is the external API for this report.
  *

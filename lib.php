@@ -67,8 +67,10 @@ function wikifilter_add_instance($moduleinstance, $mform = null) {
     $wikiid = $moduleinstance->wiki;
 
     // Saving wikifilter associations.
-    $formdata = $mform->get_data();
-    $associations = $formdata->associations;
+    if (!empty($mform)) {
+        $formdata = $mform->get_data();
+        $associations = $formdata->associations;
+    }
 
     if (!empty($associations)) {
         wikifilter_insert_associations($id, $wikiid, $associations);
@@ -133,7 +135,7 @@ function wikifilter_delete_instance($id) {
  *
  * @param int $id mod_wikifilter id.
  * @param int $wikiid mod_wiki id
- * @param int $associations mod_ikifilter associations.
+ * @param int $associations mod_wikifilter associations.
  * @return bool True if successful, false on failure.
  */
 function wikifilter_insert_associations($id, $wikiid, $associations) {
@@ -171,7 +173,6 @@ function wikifilter_update_associations($id, $wikiid, $associations) {
     wikifilter_insert_associations($id, $wikiid, $associations);
 
     return true;
-
 }
 
 /**
@@ -355,4 +356,7 @@ function get_wikifilter_associations($moduleinstanceid) {
     $associations = $DB->get_records_sql($sql);
     return $associations;
 }
+
+
+
 
