@@ -35,6 +35,11 @@ $string['delete'] = 'Delete';
 $string['modify'] = 'Modify';
 $string['modifyassociation'] = 'Modify an association';
 $string['modulename'] = 'Wiki filter';
+$string['modulename_help'] = 'The purpose of the wiki filter is to give access to wiki pages depending on user roles in a course.
+
+The plugin\'s parameters make it possible to establish links between tags associated to pages of a selected wiki, and available roles in a course. Since the original wiki remains available in the course, it is therefore recommended to hide it from students.
+
+Once the plugin has been installed and configured, participants will only be able to see pages that have the tags that correspond to their attributed roles. Other pages will be hidden from them, and the links leading to these hidden pages will not be clickable.';
 $string['modulenameplural'] = 'Wiki filters';
 $string['nodata'] = 'No data available';
 $string['nowikiincourse'] = 'There is no Wiki activity in this course.';

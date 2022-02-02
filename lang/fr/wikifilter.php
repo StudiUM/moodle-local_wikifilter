@@ -35,6 +35,11 @@ $string['delete'] = 'Supprimer';
 $string['modify'] = 'Modifier';
 $string['modifyassociation'] = 'Modifier une association';
 $string['modulename'] = 'Afficheur wiki';
+$string['modulename_help'] = 'L\'objectif de l\'afficheur wiki est de fournir aux utilisateurs un wiki dont le contenu dépend de leur rôle dans le cours.
+
+Des paramètres sont disponibles pour faire le lien entre les étiquettes (tags) associées à chaque page du wiki sélectionné et les rôles disponibles dans le cours. Le wiki d\'origine demeure disponible&nbsp;; il est donc recommandé de le cacher pour les étudiants.
+
+Une fois le paramétrage fait, les participants ne verront que les pages associées aux étiquettes auxquelles ils ont droit. L\'accès aux autres pages ne sera pas possible, et les liens vers celles-ci ne seront pas cliquables.';
 $string['modulenameplural'] = 'Afficheurs wiki';
 $string['nodata'] = 'Il n\'y a pas de données disponibles';
 $string['nowikiincourse'] = 'Il n\'y a aucune activité Wiki dans ce cours';
