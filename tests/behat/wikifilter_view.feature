@@ -1,6 +1,6 @@
 @mod @mod_wikifilter @javascript
 Feature: view wikifilter
-  As a teacher 
+  As a teacher
   I can see wiki teacher pages
   As a student
   I can see wiki student pages
@@ -14,7 +14,7 @@ Feature: view wikifilter
       | fullname | shortname | category | format |
       | Course 1 | C1        | 0        | topics |
     And the following "course enrolments" exist:
-      | user     | course | role           | 
+      | user     | course | role           |
       | teacher1 | C1     | editingteacher |
       | student1 | C1     | student        |
     And the following "activity" exists:
@@ -45,7 +45,7 @@ Feature: view wikifilter
     And I press "Create page"
     And I set the following fields to these values:
       | HTML format | page 2 content |
-      | Tags        | exam, room     | 
+      | Tags        | exam, room     |
     And I press "Save"
     # Create page 3.
     And I follow "wiki 1"
@@ -53,7 +53,7 @@ Feature: view wikifilter
     And I press "Create page"
     And I set the following fields to these values:
       | HTML format | page 3 content    |
-      | Tags        | evaluation, activity | 
+      | Tags        | evaluation, activity |
     And I press "Save"
     # Create page 4.
     And I follow "wiki 1"
@@ -61,7 +61,7 @@ Feature: view wikifilter
     And I press "Create page"
     And I set the following fields to these values:
       | HTML format | page 4 content    |
-      | Tags        | conception, validation | 
+      | Tags        | conception, validation |
     And I press "Save"
     And I am on "Course 1" course homepage
     And I turn editing mode on
@@ -104,8 +104,8 @@ Feature: view wikifilter
     Given I am logged in as "teacher1"
     And I am on "Course 1" course homepage
     When I follow "wikifilter 1"
-    Then "page 1" "link" should be visible 
-    And "page 2" "link" should not be visible 
+    Then "page 1" "link" should be visible
+    And "page 2" "link" should not be visible
     And "page 3" "link" should be visible
     And "page 4" "link" should be visible
 
@@ -113,7 +113,7 @@ Feature: view wikifilter
     Given I am logged in as "student1"
     And I am on "Course 1" course homepage
     When I follow "wikifilter 1"
-    Then "page 1" "link" should be visible 
+    Then "page 1" "link" should be visible
     And "page 2" "link" should not be visible
     And "page 3" "link" should not be visible
     And "page 4" "link" should not be visible

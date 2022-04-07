@@ -1,35 +1,12 @@
 # Wiki filter #
 
-TODO Describe the plugin shortly here.
+The purpose of the wiki filter is to give access to wiki pages depending on user roles in a course.
 
-TODO Provide more detailed description here.
-
-## Installing via uploaded ZIP file ##
-
-1. Log in to your Moodle site as an admin and go to _Site administration >
-   Plugins > Install plugins_.
-2. Upload the ZIP file with the plugin code. You should only be prompted to add
-   extra details if your plugin type is not automatically detected.
-3. Check the plugin validation report and finish the installation.
-
-## Installing manually ##
-
-The plugin can be also installed by putting the contents of this directory to
-
-    {your/moodle/dirroot}/mod/wikifilter
-
-Afterwards, log in to your Moodle site as an admin and go to _Site administration >
-Notifications_ to complete the installation.
-
-Alternatively, you can run
-
-    $ php admin/cli/upgrade.php
-
-to complete the installation from the command line.
+L'objectif de l'afficheur wiki est de fournir aux utilisateurs un wiki dont le contenu dépend de leur rôle dans le cours.
 
 ## License ##
 
-2021 Annouar Faraman <annouar.faraman@umontreal.ca>
+2022 Université de Montréal
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software

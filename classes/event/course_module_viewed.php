@@ -24,7 +24,6 @@
  */
 
 namespace mod_wikifilter\event;
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * The mod_wikifilter course module viewed event class.

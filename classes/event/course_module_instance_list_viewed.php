@@ -24,7 +24,6 @@
  */
 
 namespace mod_wikifilter\event;
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * The mod_wikifilter instance list viewed event class.

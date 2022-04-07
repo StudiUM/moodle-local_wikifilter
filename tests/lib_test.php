@@ -23,6 +23,7 @@
  * @copyright 2022 Université de Montréal
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+namespace mod_wikifilter;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -37,7 +38,7 @@ global $CFG;
  * @copyright 2022 Université de Montréal
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class mod_wikifilter_lib_testcase extends advanced_testcase {
+class lib_test extends \advanced_testcase {
 
     /**
      * Set up for every test
@@ -57,13 +58,13 @@ class mod_wikifilter_lib_testcase extends advanced_testcase {
         // Setup test data.
         $course = $this->getDataGenerator()->create_course();
         $wiki = $this->getDataGenerator()->create_module('wiki', array('course' => $course->id, 'wikimode' => 'collaborative'));
-        $context = context_module::instance($wiki->cmid);
+        $context = \context_module::instance($wiki->cmid);
         $firstpage = $this->getDataGenerator()->get_plugin_generator('mod_wiki')->create_first_page($wiki);
 
         $expectedtags = array('biologie', 'master', 'medecine', 'cours');
 
         foreach ($expectedtags as $tag) {
-            core_tag_tag::add_item_tag('mod_wiki', 'wiki_pages', $firstpage->id, $context, $tag);
+            \core_tag_tag::add_item_tag('mod_wiki', 'wiki_pages', $firstpage->id, $context, $tag);
         }
 
         $result = array_values(get_wiki_pages_tags($wiki->id, $course->id));
@@ -79,7 +80,7 @@ class mod_wikifilter_lib_testcase extends advanced_testcase {
      */
     public function test_can_user_view_wiki_page() {
         global $DB;
-        
+
         // Create a course.
         $course = $this->getDataGenerator()->create_course();
 
@@ -88,12 +89,12 @@ class mod_wikifilter_lib_testcase extends advanced_testcase {
         $wikiinstance = $this->getDataGenerator()->create_module('wiki', $wikiinstancedata);
 
         // Create the front page of the created wiki instance with tags.
-        $context = context_module::instance($wikiinstance->cmid);
+        $context = \context_module::instance($wikiinstance->cmid);
         $firstpage = $this->getDataGenerator()->get_plugin_generator('mod_wiki')->create_first_page($wikiinstance);
         $firstpagetags = array('biologie', 'medecine');
 
         foreach ($firstpagetags as $tag) {
-            core_tag_tag::add_item_tag('mod_wiki', 'wiki_pages', $firstpage->id, $context, $tag);
+            \core_tag_tag::add_item_tag('mod_wiki', 'wiki_pages', $firstpage->id, $context, $tag);
         }
 
         // Create a wikifilter instance.
@@ -111,7 +112,7 @@ class mod_wikifilter_lib_testcase extends advanced_testcase {
         $this->getDataGenerator()->enrol_user($teacher->id, $course->id, $teacherrole->id, 'manual');
 
         // Create wikifilter instance associations.
-        $firstpagetagsids = array_keys(core_tag_tag::get_item_tags_array('mod_wiki', 'wiki_pages', $firstpage->id));
+        $firstpagetagsids = array_keys(\core_tag_tag::get_item_tags_array('mod_wiki', 'wiki_pages', $firstpage->id));
         $associations = array(
             $teacherrole->id.'-'.$firstpagetagsids[0],
             $teacherrole->id.'-'.$firstpagetagsids[1]

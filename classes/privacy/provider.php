@@ -24,8 +24,6 @@
  */
 namespace mod_wikifilter\privacy;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Data provider class.
  *
